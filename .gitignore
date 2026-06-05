@@ -12,3 +12,7 @@ Thumbs.db
 # 暫存 / 孤兒檔
 .git_commit_msg.tmp
 panel.css
+
+# 一次性產圖腳本（含絕對路徑，不可攜）
+make_assets.py
+make_store_images.py

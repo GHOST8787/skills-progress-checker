@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Google Sans","Noto Sans TC","Roboto",system-ui,sans-serif; color: #202124; background: #fff; }
+  .box { position: absolute; left: 0; overflow: hidden; }
+  #shot { top: 0; width: 1280px; height: 800px; }
+  #marquee { top: 820px; width: 1400px; height: 560px; }
+  #small { top: 1400px; width: 440px; height: 280px; }
+
+  .warm { background: linear-gradient(135deg, #fffdf9 0%, #fdf3e6 100%); }
+  .stripe { height: 6px; width: 100%;
+    background: linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75% 100%); }
+
+  /* ---- 彈窗 mock ---- */
+  .popup { width: 380px; background: #fffdf9; border-radius: 20px; overflow: hidden;
+    border: 1px solid #efe7da; box-shadow: 0 18px 50px rgba(60,64,67,.22); }
+  .p-head { position: relative; background: #fff; padding: 16px 16px 13px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #efe7da; }
+  .p-head .ps { position: absolute; top: 0; left: 0; right: 0; height: 5px;
+    background: linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75% 100%); }
+  .p-title { flex: 1; font-size: 16px; font-weight: 600; }
+  .dots { display: flex; gap: 5px; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; }
+  .dots i:nth-child(1){background:#4285f4}.dots i:nth-child(2){background:#ea4335}
+  .dots i:nth-child(3){background:#fbbc04}.dots i:nth-child(4){background:#34a853}
+  .p-sum { padding: 10px 16px 4px; font-size: 12px; color: #5f6368; }
+  .p-sum b { color: #1a73e8; }
+  .p-bar { display: flex; align-items: center; gap: 10px; padding: 8px 16px 12px; }
+  .p-btn { background: #1a73e8; color: #fff; font-size: 12.5px; font-weight: 600; padding: 9px 16px; border-radius: 999px; box-shadow: 0 1px 2px rgba(60,64,67,.25); }
+  .p-chk { font-size: 12px; color: #5f6368; }
+  .card { margin: 0 10px 10px; background: #fff; border: 1px solid #efe7da; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(60,64,67,.08); }
+  .c-head { display: flex; align-items: center; gap: 9px; padding: 11px 14px; }
+  .c-caret { color: #1a73e8; font-size: 11px; }
+  .c-name { flex: 1; font-size: 13px; font-weight: 600; }
+  .c-count { font-size: 12px; font-weight: 700; padding: 2px 11px; border-radius: 999px; background: #e8f0fe; color: #1a73e8; }
+  .row { display: flex; align-items: center; gap: 9px; padding: 7px 14px 7px 24px; }
+  .st { width: 15px; text-align: center; font-weight: 700; font-size: 13px; }
+  .ok { color: #188038; } .todo { color: #d93025; } .uns { color: #bdc1c6; }
+  .rn { flex: 1; font-size: 12.5px; color: #3c4043; }
+  .tag { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: #f1f3f4; color: #80868b; }
+
+  /* ---- 截圖（1280×800） ---- */
+  #shot { display: flex; align-items: center; padding: 0 70px; gap: 64px; }
+  #shot .left { flex: 0 0 auto; transform: scale(1.18); transform-origin: center; }
+  #shot .right { flex: 1; }
+  #shot .kicker { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: #1a73e8; }
+  #shot .kbar { width: 34px; height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc04, #34a853); }
+  #shot h1 { font-size: 44px; line-height: 1.25; margin: 16px 0 22px; color: #202124; letter-spacing: -0.5px; }
+  #shot .feat { display: flex; align-items: flex-start; gap: 12px; margin: 14px 0; font-size: 18px; color: #3c4043; }
+  #shot .feat .fi { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px; background: #e8f0fe; color: #1a73e8; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
+
+  /* ---- 跑馬燈（1400×560） ---- */
+  #marquee { display: flex; align-items: center; padding: 0 80px; gap: 70px; }
+  #marquee .ms { position: absolute; top: 0; left: 0; }
+  #marquee .left { flex: 1; }
+  #marquee .badge { display: flex; align-items: center; gap: 14px; }
+  #marquee .badge img { width: 84px; height: 84px; border-radius: 20px; box-shadow: 0 6px 18px rgba(60,64,67,.18); }
+  #marquee .badge .nm { font-size: 30px; font-weight: 700; }
+  #marquee .badge .tg { font-size: 16px; color: #5f6368; margin-top: 2px; }
+  #marquee h2 { font-size: 38px; line-height: 1.3; margin-top: 26px; letter-spacing: -0.5px; }
+  #marquee h2 span { color: #1a73e8; }
+  #marquee .right { flex: 0 0 auto; transform: scale(1.05); }
+
+  /* ---- 小宣傳磚（440×280） ---- */
+  #small { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
+  #small .ms { position: absolute; top: 0; left: 0; }
+  #small img { width: 92px; height: 92px; border-radius: 22px; box-shadow: 0 6px 18px rgba(60,64,67,.18); }
+  #small .nm { font-size: 24px; font-weight: 700; }
+  #small .tg { font-size: 14px; color: #5f6368; padding: 0 28px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <!-- 截圖 1280×800 -->
+  <div class="box warm" id="shot">
+    <div class="left">
+      <div class="popup">
+        <div class="p-head"><span class="ps"></span><span class="p-title">Skills 學程進度</span>
+          <span class="dots"><i></i><i></i><i></i><i></i></span></div>
+        <div class="p-sum">可偵測 <b>45</b> 門　・　已完成 <b>12</b>　・　Skillshop <b>5</b></div>
+        <div class="p-bar"><span class="p-btn">一鍵掃描全部</span><span class="p-chk">☑ 隱藏已完成</span></div>
+        <div class="card">
+          <div class="c-head"><span class="c-caret">▾</span><span class="c-name">AI 職場通識學程</span><span class="c-count">12 / 33</span></div>
+          <div class="row"><span class="st ok">✓</span><span class="rn">生成式 AI：不只是聊天機器人</span></div>
+          <div class="row"><span class="st ok">✓</span><span class="rn">生成式 AI：瞭解基礎概念</span></div>
+          <div class="row"><span class="st todo">✗</span><span class="rn">生成式 AI 應用程式：徹底改變工作方式</span></div>
+          <div class="row"><span class="st uns">—</span><span class="rn">Intro to NotebookLM</span><span class="tag">未抓到</span></div>
+        </div>
+        <div class="card"><div class="c-head"><span class="c-caret">▸</span><span class="c-name">Google Cloud 學程</span><span class="c-count">2 / 11</span></div></div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="kicker"><span class="kbar"></span>Google 數位人才探索計畫</div>
+      <h1>三個學程的進度<br>一眼看完</h1>
+      <div class="feat"><span class="fi">⚡</span>一鍵掃描全部，自動抓完成狀態</div>
+      <div class="feat"><span class="fi">✓</span>分學程顯示「已完成 / 還缺哪幾門」</div>
+      <div class="feat"><span class="fi">◎</span>隱藏已完成，只專注還沒做的課</div>
+    </div>
+  </div>
+
+  <!-- 跑馬燈 1400×560 -->
+  <div class="box warm" id="marquee">
+    <div class="ms stripe"></div>
+    <div class="left">
+      <div class="badge"><img src="../store-icon-128.png" alt="logo">
+        <div><div class="nm">Skills 學程進度</div><div class="tg">Google 數位人才探索計畫進度追蹤</div></div></div>
+      <h2>登入 Google Skills，<br>進度<span>一鍵掌握</span></h2>
+    </div>
+    <div class="right">
+      <div class="popup">
+        <div class="p-head"><span class="ps"></span><span class="p-title">Skills 學程進度</span>
+          <span class="dots"><i></i><i></i><i></i><i></i></span></div>
+        <div class="p-sum">可偵測 <b>45</b> 門　・　已完成 <b>12</b>　・　Skillshop <b>5</b></div>
+        <div class="p-bar"><span class="p-btn">一鍵掃描全部</span><span class="p-chk">☑ 隱藏已完成</span></div>
+        <div class="card">
+          <div class="c-head"><span class="c-caret">▾</span><span class="c-name">AI 職場通識學程</span><span class="c-count">12 / 33</span></div>
+          <div class="row"><span class="st ok">✓</span><span class="rn">生成式 AI：瞭解基礎概念</span></div>
+          <div class="row"><span class="st todo">✗</span><span class="rn">生成式 AI 應用程式</span></div>
+          <div class="row"><span class="st uns">—</span><span class="rn">Intro to NotebookLM</span><span class="tag">未抓到</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 小宣傳磚 440×280 -->
+  <div class="box warm" id="small">
+    <div class="ms stripe"></div>
+    <img src="../store-icon-128.png" alt="logo">
+    <div class="nm">Skills 學程進度</div>
+    <div class="tg">數位人才探索計畫<br>三學程進度一鍵掌握</div>
+  </div>
+</body>
+</html>
