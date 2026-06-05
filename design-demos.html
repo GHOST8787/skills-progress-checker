@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>Skills 進度 — 設計方向 5 選 1</title>
+<style>
+  body {
+    margin: 0;
+    background: #f3f4f6;
+    font-family: "Google Sans", "Noto Sans TC", "Roboto", system-ui, "Microsoft JhengHei", sans-serif;
+    color: #202124;
+  }
+  .page-title { padding: 22px 24px 4px; font-size: 20px; font-weight: 700; }
+  .page-sub { padding: 0 24px 16px; font-size: 13px; color: #5f6368; }
+  .stage {
+    display: flex;
+    gap: 26px;
+    padding: 8px 24px 40px;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .demo { flex: 0 0 auto; width: 360px; }
+  .demo-label { font-size: 13px; font-weight: 700; margin-bottom: 4px; color: #202124; }
+  .demo-desc { font-size: 11.5px; color: #5f6368; margin-bottom: 10px; line-height: 1.5; min-height: 34px; }
+
+  /* ---------- 共用結構（用 CSS 變數驅動，各主題覆寫） ---------- */
+  .popup {
+    width: 360px;
+    background: var(--bg, #fff);
+    border-radius: var(--radius, 18px);
+    overflow: hidden;
+    box-shadow: 0 4px 22px rgba(60, 64, 67, 0.18);
+    border: 1px solid var(--border, #e8eaed);
+    font-family: var(--font, inherit);
+  }
+  .ph {
+    position: relative;
+    background: var(--hbg, #0b57d0);
+    color: var(--hfg, #fff);
+    padding: 14px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ph-title { flex: 1 1 auto; }
+  .stripe { display: none; position: absolute; top: 0; left: 0; right: 0; height: 5px;
+    background: linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75% 100%); }
+  .dots { display: none; gap: 5px; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .dots i:nth-child(1){background:#4285f4} .dots i:nth-child(2){background:#ea4335}
+  .dots i:nth-child(3){background:#fbbc04} .dots i:nth-child(4){background:#34a853}
+
+  .psum { padding: 10px 16px; font-size: 12px; color: #5f6368; border-bottom: 1px solid var(--border, #e8eaed); }
+  .psum b { color: var(--primary, #0b57d0); }
+
+  .pbar { display: flex; align-items: center; gap: 10px; padding: 11px 16px; background: var(--barbg, transparent); }
+  .pbtn {
+    border: none; cursor: pointer;
+    background: var(--primary, #0b57d0); color: #fff;
+    font: 600 13px var(--font, inherit);
+    padding: 9px 16px; border-radius: var(--btnradius, 999px);
+  }
+  .pchk { font-size: 12px; color: #5f6368; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  .pchk input { accent-color: var(--primary, #0b57d0); }
+
+  .prog { border-top: 1px solid var(--border, #e8eaed); }
+  .prog-h { display: flex; align-items: center; gap: 9px; padding: 11px 16px; cursor: pointer; background: var(--proghbg, transparent); }
+  .caret { color: var(--primary, #0b57d0); font-size: 11px; }
+  .prog-n { flex: 1 1 auto; font-size: 13px; font-weight: 600; color: #202124; }
+  .prog-c { font-size: 12px; font-weight: 700; padding: 2px 11px; border-radius: 999px;
+    background: var(--chip, #e8f0fe); color: var(--primary, #0b57d0); }
+  .prog-b { padding-bottom: 6px; }
+
+  .crow { display: flex; align-items: flex-start; gap: 10px; padding: 8px 16px 8px 32px; text-decoration: none; }
+  .crow:hover { background: var(--hover, #f8f9fa); }
+  .cst { flex: 0 0 auto; width: 16px; text-align: center; font-size: 13px; font-weight: 700; line-height: 1.4; }
+  .st-ok { color: var(--done, #188038); }
+  .st-todo { color: var(--todo, #d93025); }
+  .st-unseen { color: #bdc1c6; }
+  .cname { flex: 1 1 auto; font-size: 12.5px; line-height: 1.4; color: #3c4043; }
+  .ctag { flex: 0 0 auto; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 999px;
+    background: var(--tagbg, #f1f3f4); color: var(--tagfg, #5f6368); margin-top: 1px; }
+
+  .pleg { padding: 10px 16px; font-size: 11px; color: #80868b; background: var(--legbg, #f8f9fa);
+    border-top: 1px solid var(--border, #e8eaed); line-height: 1.6; }
+
+  /* ============ 主題 1：Material 3（Material You） ============ */
+  .theme-m3 {
+    --font: "Google Sans","Roboto",sans-serif;
+    --bg: #fff; --hbg: #d3e3fd; --hfg: #041e49; --primary: #0b57d0;
+    --radius: 26px; --btnradius: 999px; --chip: #c2e7ff; --proghbg: #f7f9ff;
+    --done: #188038; --todo: #b3261e; --border: #e1e3e6; --hover: #f3f6fc; --legbg: #f7f9ff;
+  }
+  .theme-m3 .prog-c { color: #001d35; }
+
+  /* ============ 主題 2：Google Search Minimal ============ */
+  .theme-search {
+    --font: "Roboto","Arial",sans-serif;
+    --bg: #fff; --hbg: #fff; --hfg: #202124; --primary: #1a73e8;
+    --radius: 16px; --chip: #e8f0fe; --done: #188038; --todo: #d93025;
+    --border: #dadce0; --hover: #f8f9fa; --legbg: #fff;
+  }
+  .theme-search .ph { border-bottom: 1px solid #dadce0; font-weight: 500; }
+  .theme-search .dots { display: flex; }
+  .theme-search .pbtn { box-shadow: 0 1px 2px rgba(60,64,67,.3); }
+
+  /* ============ 主題 3：Google Cloud Console ============ */
+  .theme-cloud {
+    --font: "Google Sans","Roboto",sans-serif;
+    --bg: #fff; --hbg: #1a73e8; --hfg: #fff; --primary: #1a73e8;
+    --radius: 12px; --btnradius: 6px; --chip: #e8f0fe; --proghbg: #f8f9fa;
+    --done: #1e8e3e; --todo: #d93025; --border: #e0e3e7; --hover: #f1f3f4; --legbg: #f8f9fa;
+  }
+  .theme-cloud .crow { border-left: 3px solid transparent; padding-left: 29px; }
+  .theme-cloud .crow:hover { border-left-color: #1a73e8; }
+  .theme-cloud .prog-c { border-radius: 6px; }
+
+  /* ============ 主題 4：Gemini Gradient ============ */
+  .theme-gemini {
+    --font: "Google Sans","Roboto",sans-serif;
+    --bg: #faf8ff; --hfg: #fff; --primary: #7b5ea7;
+    --radius: 28px; --chip: #efe7fb; --proghbg: rgba(255,255,255,.6);
+    --done: #1e8e3e; --todo: #d93025; --border: #ece4f7; --hover: #f4eefc; --legbg: #f6f1fd;
+  }
+  .theme-gemini .ph { background: linear-gradient(120deg, #4285f4 0%, #9b72cb 52%, #d96570 100%); }
+  .theme-gemini .pbtn { background: linear-gradient(120deg, #4285f4, #9b72cb); }
+  .theme-gemini .prog-c { background: linear-gradient(120deg,#e8f0fe,#efe7fb); color: #7b5ea7; }
+
+  /* ============ 主題 5：Skills 暖 × Google 四色 ============ */
+  .theme-skills {
+    --font: "Google Sans","Noto Sans TC",sans-serif;
+    --bg: #fffdf9; --hbg: #fff; --hfg: #202124; --primary: #1a73e8;
+    --radius: 20px; --chip: #e8f0fe; --proghbg: #fbf7f0;
+    --done: #188038; --todo: #d93025; --border: #efe7da; --hover: #fbf7f0; --legbg: #fbf7f0;
+  }
+  .theme-skills .ph { padding-top: 18px; border-bottom: 1px solid #efe7da; font-weight: 600; }
+  .theme-skills .stripe { display: block; }
+  .theme-skills .dots { display: flex; }
+</style>
+</head>
+<body>
+  <div class="page-title">Skills 進度 — 設計方向 5 選 1</div>
+  <div class="page-sub">五種都融入 Google 元素 + 圓角。看完跟我說要哪一號（可混搭，例如「3 的版面 + 5 的四色」）。</div>
+  <div class="stage" id="stage"></div>
+
+<script>
+  const programs = [
+    { name: "AI 職場通識學程", count: "12 / 33", open: true, rows: [
+      ["ok", "生成式 AI：不只是聊天機器人", ""],
+      ["ok", "生成式 AI：瞭解基礎概念", ""],
+      ["ok", "生成式 AI：掌握幕後技術與環境", ""],
+      ["todo", "生成式 AI 應用程式：徹底改變工作方式", ""],
+      ["unseen", "Presentation Scripts with Gemini", "未抓到"],
+      ["unseen", "Intro to NotebookLM", "未抓到"],
+      ["unseen", "Gemini in Gmail", "未抓到"],
+    ]},
+    { name: "數位行銷學程", count: "4 / 10", open: false, rows: [] },
+    { name: "Google Cloud 學程", count: "2 / 11", open: false, rows: [] },
+  ];
+
+  function rowHtml(r) {
+    const sym = r[0] === "ok" ? "✓" : r[0] === "todo" ? "✗" : "—";
+    const tag = r[2] ? '<span class="ctag">' + r[2] + "</span>" : "";
+    return '<a class="crow"><span class="cst st-' + r[0] + '">' + sym + "</span>" +
+      '<span class="cname">' + r[1] + "</span>" + tag + "</a>";
+  }
+
+  function popupHtml() {
+    const progs = programs.map((p) => {
+      const body = p.open
+        ? '<div class="prog-b">' + p.rows.map(rowHtml).join("") + "</div>"
+        : "";
+      const caret = p.open ? "▾" : "▸";
+      return '<div class="prog">' +
+        '<div class="prog-h"><span class="caret">' + caret + "</span>" +
+        '<span class="prog-n">' + p.name + "</span>" +
+        '<span class="prog-c">' + p.count + "</span></div>" + body + "</div>";
+    }).join("");
+
+    return (
+      '<div class="ph"><span class="stripe"></span>' +
+      '<span class="ph-title">Skills 學程進度</span>' +
+      '<span class="dots"><i></i><i></i><i></i><i></i></span></div>' +
+      '<div class="psum">可偵測 <b>45</b> 門　・　已完成 <b>12</b>　・　Skillshop <b>5</b></div>' +
+      '<div class="pbar"><button class="pbtn">一鍵掃描全部</button>' +
+      '<label class="pchk"><input type="checkbox"> 隱藏已完成</label></div>' +
+      progs +
+      '<div class="pleg">✓ 已完成　✗ 未完成　— 未抓到　・　○ Skillshop／手動</div>'
+    );
+  }
+
+  const themes = [
+    { cls: "theme-m3", label: "DEMO 1 · Material 3", desc: "Google 最新設計語言。大圓角、藍色淡色調標題列、膠囊按鈕，柔和現代。" },
+    { cls: "theme-search", label: "DEMO 2 · Search 極簡", desc: "Google 搜尋風。白底、細灰線、標題列右上四色圓點，乾淨輕盈。" },
+    { cls: "theme-cloud", label: "DEMO 3 · Cloud Console", desc: "Google Cloud 控制台風。藍色標題列、左側藍色強調條、資訊密度高，偏工程。" },
+    { cls: "theme-gemini", label: "DEMO 4 · Gemini 漸層", desc: "Gemini AI 風。藍→紫→粉漸層標題與按鈕、最大圓角，活潑有 AI 感。" },
+    { cls: "theme-skills", label: "DEMO 5 · 暖 × 四色", desc: "保留現在的暖白底，頂部加 Google 四色條 + 四色圓點，溫暖又有品牌感。" },
+  ];
+
+  document.getElementById("stage").innerHTML = themes.map((t) =>
+    '<div class="demo"><div class="demo-label">' + t.label + "</div>" +
+    '<div class="demo-desc">' + t.desc + "</div>" +
+    '<div class="popup ' + t.cls + '">' + popupHtml() + "</div></div>"
+  ).join("");
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    /* 讓最外框（Chrome 擴充彈窗）跟著圓角：外層透明 + body 圓角裁切。
+       新版 Chrome（約 114+）會把彈窗外框裁成圓角。 */
+    html { background: transparent; margin: 0; }
+    body {
+      width: 400px;
+      margin: 0;
+      background: #fffdf9;
+      color: #202124;
+      border-radius: 16px;
+      overflow: hidden;
+      font-family: "Google Sans", "Noto Sans TC", "Roboto", system-ui, "Microsoft JhengHei", sans-serif;
+    }
+
+    /* 標題列：白底 + 頂部 Google 四色條 + 右上四色圓點 */
+    .head {
+      position: relative;
+      background: #fff;
+      color: #202124;
+      padding: 16px 16px 13px;
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #efe7da;
+    }
+    .head .stripe {
+      position: absolute; top: 0; left: 0; right: 0; height: 5px;
+      background: linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75% 100%);
+    }
+    .head .head-title { flex: 1 1 auto; }
+    .head .dots { display: flex; gap: 5px; }
+    .head .dots i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .head .dots i:nth-child(1) { background: #4285f4; }
+    .head .dots i:nth-child(2) { background: #ea4335; }
+    .head .dots i:nth-child(3) { background: #fbbc04; }
+    .head .dots i:nth-child(4) { background: #34a853; }
+
+    .summary { padding: 10px 16px 4px; font-size: 12px; color: #5f6368; }
+    .summary b { color: #1a73e8; }
+
+    .bar { display: flex; align-items: center; gap: 10px; padding: 8px 16px 12px; }
+    .scan-btn {
+      border: none; cursor: pointer;
+      background: #1a73e8; color: #fff;
+      font-weight: 600; font-size: 12.5px;
+      padding: 9px 16px; border-radius: 999px;
+      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.25);
+    }
+    .scan-btn:hover { background: #1765cc; }
+    .scan-btn:disabled { background: #c3d6f5; cursor: default; box-shadow: none; }
+    .hide-done {
+      flex: 0 0 auto; display: flex; align-items: center; gap: 5px;
+      font-size: 12px; color: #5f6368; cursor: pointer; user-select: none;
+    }
+    .hide-done input { accent-color: #1a73e8; cursor: pointer; }
+    .scan-status { font-size: 11px; color: #5f6368; flex: 1 1 auto; min-width: 0; }
+
+    .list { max-height: 480px; overflow-y: auto; padding: 0 10px 4px; }
+
+    /* 每個學程 = 圓角白卡 */
+    .prog {
+      background: #fff;
+      border: 1px solid #efe7da;
+      border-radius: 16px;
+      margin: 0 0 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
+    }
+    .prog-head { display: flex; align-items: center; gap: 9px; padding: 12px 14px; cursor: pointer; background: #fff; }
+    .prog-head:hover { background: #fbf7f0; }
+    .caret { flex: 0 0 auto; width: 13px; color: #1a73e8; font-size: 11px; transition: transform 0.15s; }
+    .prog.open .caret { transform: rotate(90deg); }
+    .prog-name { flex: 1 1 auto; font-size: 13px; font-weight: 600; color: #202124; }
+    .prog-count {
+      flex: 0 0 auto; font-size: 12px; font-weight: 700;
+      padding: 2px 11px; border-radius: 999px; background: #e8f0fe; color: #1a73e8;
+    }
+    .prog-count.all-done { background: #e6f4ea; color: #188038; }
+
+    .prog-body { display: none; padding: 2px 0 6px; }
+    .prog.open .prog-body { display: block; }
+
+    .course { display: flex; align-items: flex-start; gap: 9px; padding: 7px 14px 7px 26px; text-decoration: none; }
+    .course:hover { background: #fbf7f0; }
+    .st { flex: 0 0 auto; width: 16px; text-align: center; font-size: 13px; font-weight: 700; line-height: 1.45; }
+    .st-ok { color: #188038; }
+    .st-todo { color: #d93025; }
+    .st-unseen { color: #bdc1c6; }
+    .c-name { flex: 1 1 auto; font-size: 12.5px; line-height: 1.45; color: #3c4043; word-break: break-word; }
+    .c-tag { flex: 0 0 auto; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 999px; margin-top: 1px; }
+    .tag-shop { background: #f3e8fd; color: #8430ce; }
+    .tag-unseen { background: #f1f3f4; color: #80868b; }
+
+    .prog-note { padding: 6px 14px 10px 26px; font-size: 11px; color: #9aa0a6; line-height: 1.5; }
+
+    .legend {
+      padding: 9px 16px; font-size: 11px; color: #80868b;
+      background: #fbf7f0; border-top: 1px solid #efe7da; line-height: 1.7;
+    }
+    .legend .st { display: inline; width: auto; }
+
+    .empty { padding: 22px 14px; font-size: 13px; color: #9aa0a6; text-align: center; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <div class="head">
+    <span class="stripe"></span>
+    <span class="head-title">Skills 學程進度</span>
+    <span class="dots"><i></i><i></i><i></i><i></i></span>
+  </div>
+  <div class="summary" id="summary">讀取中…</div>
+  <div class="bar">
+    <button class="scan-btn" id="scanAll">一鍵掃描全部</button>
+    <label class="hide-done"><input type="checkbox" id="hideDone" /> 隱藏已完成</label>
+    <span class="scan-status" id="scanStatus"></span>
+  </div>
+  <div class="list" id="list"></div>
+  <div class="legend" id="legend"></div>
+  <script src="master-list.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

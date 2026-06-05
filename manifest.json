@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Skills 進度檢查",
+  "version": "1.0.0",
+  "description": "在 Google Skills 課程頁顯示完成進度，標出還沒做完的 Lab 與測驗。純讀取，不點擊、不送出任何資料。",
+  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Skills 進度總表"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.skills.google/*",
+        "https://www.cloudskillsboost.google/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

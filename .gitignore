@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# 編輯器
+.vscode/
+.idea/
+
+# 打包輸出
+*.zip
+
+# 暫存 / 孤兒檔
+.git_commit_msg.tmp
+panel.css
