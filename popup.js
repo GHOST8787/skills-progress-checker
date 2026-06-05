@@ -83,13 +83,19 @@
             state === "shop" ? '<span class="c-tag tag-shop">Skillshop</span>'
             : state === "unseen" ? '<span class="c-tag tag-unseen">未抓到</span>'
             : "";
-          return (
-            '<a class="course" href="' + escapeHtml(fullUrl(c.u)) + '" target="_blank" rel="noopener">' +
+          const url = fullUrl(c.u);
+          const link =
+            '<a class="course" href="' + escapeHtml(url) + '" target="_blank" rel="noopener">' +
             STATE_ICON[state] +
             '<span class="c-name">' + escapeHtml(c.title) + "</span>" +
             tag +
-            "</a>"
-          );
+            "</a>";
+          // 已完成不給勾；其餘（未完成 / 未抓到 / Skillshop）可勾選批次開啟
+          const pick =
+            state === "ok"
+              ? '<span class="c-pick-spacer"></span>'
+              : '<input type="checkbox" class="c-pick" data-url="' + escapeHtml(url) + '" />';
+          return '<div class="course-row">' + pick + link + "</div>";
         })
         .join("");
 
@@ -127,11 +133,6 @@
 
     $("list").innerHTML = sections.join("");
 
-    $("legend").innerHTML =
-      STATE_ICON.ok + " 已完成　" + STATE_ICON.todo + " 未完成（已逛到該頁）　" +
-      STATE_ICON.unseen + " 未抓到（請去逛對應路徑頁）<br>" +
-      "○ Skillshop／手動確認　・　" + escapeHtml(MASTER_LIST.capstoneNote);
-
     // 展開 / 收合
     [...document.querySelectorAll(".prog-head")].forEach((head) => {
       head.addEventListener("click", () => head.parentElement.classList.toggle("open"));
@@ -139,6 +140,39 @@
     // 預設展開第一個學程
     const first = document.querySelector(".prog");
     if (first) first.classList.add("open");
+
+    // 重畫後核取方塊全為未勾，更新「開啟選取」計數與全選狀態
+    updatePickCount();
+  }
+
+  // ---- 未完成課程：勾選批次開啟 ----
+  function pickBoxes() { return [...document.querySelectorAll(".c-pick")]; }
+
+  function updatePickCount() {
+    const boxes = pickBoxes();
+    const checked = boxes.filter((b) => b.checked);
+    const btn = $("openPicked");
+    const all = $("pickAll");
+    if (btn) {
+      btn.textContent = "開啟選取 (" + checked.length + ")";
+      btn.disabled = checked.length === 0;
+    }
+    if (all) all.checked = boxes.length > 0 && checked.length === boxes.length;
+  }
+
+  function openSelected() {
+    const urls = pickBoxes().filter((b) => b.checked).map((b) => b.getAttribute("data-url"));
+    if (!urls.length) return;
+    if (typeof chrome === "undefined" || !chrome.tabs) {
+      setStatus("（預覽模式無法開分頁，請在 Chrome 擴充內使用）");
+      return;
+    }
+    // 在背景分頁逐一開啟，不搶走目前焦點
+    urls.forEach((u) => chrome.tabs.create({ url: u, active: false }));
+    // 開完即清空勾選，避免重複開啟同幾門
+    pickBoxes().forEach((b) => { b.checked = false; });
+    updatePickCount();
+    setStatus("已在背景開啟 " + urls.length + " 門課程分頁");
   }
 
   // ---- 一鍵掃描全部 ----
@@ -182,10 +216,10 @@
     );
 
     let remain = WAIT;
-    setStatus("掃描中…在背景開了 " + urls.length + " 頁，約 " + remain + " 秒");
+    setStatus("正在掃描中，請靜待 " + remain + " 秒…（背景開了 " + urls.length + " 頁）");
     const cd = setInterval(() => {
       remain -= 1;
-      if (remain > 0) setStatus("掃描中…約 " + remain + " 秒後完成");
+      if (remain > 0) setStatus("正在掃描中，請靜待 " + remain + " 秒…");
     }, 1000);
 
     setTimeout(() => {
@@ -198,6 +232,75 @@
       });
     }, WAIT * 1000);
   }
+
+  // ---- 掃公開頁（貼公開 profile / Skillshop 網址交叉驗證）----
+  function setPubStatus(msg) { const e = $("pubStatus"); if (e) e.textContent = msg; }
+
+  function savePublicUrls() {
+    const v = {
+      skills: ($("skillsUrl").value || "").trim(),
+      shop: ($("shopUrl").value || "").trim(),
+    };
+    if (typeof chrome !== "undefined" && chrome.storage) chrome.storage.local.set({ publicUrls: v });
+    setPubStatus("已儲存網址");
+  }
+
+  function scanPublic() {
+    const btn = $("scanPub");
+    if (typeof chrome === "undefined" || !chrome.tabs) {
+      setPubStatus("（預覽模式無法開分頁，請在 Chrome 擴充內使用）");
+      return;
+    }
+    const urls = [];
+    const sUrl = ($("skillsUrl").value || "").trim();
+    const shUrl = ($("shopUrl").value || "").trim();
+    if (/^https?:\/\//i.test(sUrl)) urls.push(sUrl);
+    if (/^https?:\/\//i.test(shUrl)) urls.push(shUrl);
+    if (!urls.length) { setPubStatus("請先填入至少一個公開頁網址"); return; }
+
+    // 掃描前先記住網址，省得每次重打
+    savePublicUrls();
+
+    const WAIT = 10; // 公開頁是伺服器端渲染、載入快，10 秒足夠
+    btn.disabled = true;
+    const ids = [];
+    urls.forEach((u) => chrome.tabs.create({ url: u, active: false }, (tab) => { if (tab) ids.push(tab.id); }));
+
+    let remain = WAIT;
+    setPubStatus("正在掃描中，請靜待 " + remain + " 秒…");
+    const cd = setInterval(() => {
+      remain -= 1;
+      if (remain > 0) setPubStatus("正在掃描中，請靜待 " + remain + " 秒…");
+    }, 1000);
+
+    setTimeout(() => {
+      clearInterval(cd);
+      if (chrome.tabs && ids.length) chrome.tabs.remove(ids, () => {}); // 背景分頁掃完自動關閉
+      loadProgress((progress) => {
+        render(progress);
+        setPubStatus("掃描完成，已更新總表");
+        btn.disabled = false;
+      });
+    }, WAIT * 1000);
+  }
+
+  const savePubBtn = $("savePub");
+  if (savePubBtn) savePubBtn.addEventListener("click", savePublicUrls);
+  const scanPubBtn = $("scanPub");
+  if (scanPubBtn) scanPubBtn.addEventListener("click", scanPublic);
+
+  // 批次開啟綁定：list 內 checkbox 用事件委派（render 重畫不掉 listener）
+  const listEl = $("list");
+  if (listEl) listEl.addEventListener("change", (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains("c-pick")) updatePickCount();
+  });
+  const pickAllBox = $("pickAll");
+  if (pickAllBox) pickAllBox.addEventListener("change", () => {
+    pickBoxes().forEach((b) => { b.checked = pickAllBox.checked; });
+    updatePickCount();
+  });
+  const openBtn = $("openPicked");
+  if (openBtn) openBtn.addEventListener("click", openSelected);
 
   const scanBtn = $("scanAll");
   if (scanBtn) scanBtn.addEventListener("click", scanAll);
@@ -215,8 +318,11 @@
 
   // 先還原勾選偏好，再載入進度渲染
   if (typeof chrome !== "undefined" && chrome.storage) {
-    chrome.storage.local.get(["hideDone"], (d) => {
+    chrome.storage.local.get(["hideDone", "publicUrls"], (d) => {
       if (hideBox) hideBox.checked = !!d.hideDone;
+      const pu = d.publicUrls || {};
+      if ($("skillsUrl") && pu.skills) $("skillsUrl").value = pu.skills;
+      if ($("shopUrl") && pu.shop) $("shopUrl").value = pu.shop;
       loadProgress(render);
     });
   } else {

@@ -30,7 +30,26 @@
       };
     });
 
-    // 2) 課程內頁：判斷「這門課自己」是否完成（.course-completed 為完成標記）
+    // 2) 公開 profile 頁（/public_profiles/...）：每個完成的徽章對應一個
+    //    <ql-dialog id="public-profile-award-modal-N">，彈窗內 <ql-button href="/course_templates/{id}">。
+    //    出現在公開頁 = 已完成，直接收集這些 course id 標 completed。
+    if (location.pathname.includes("/public_profiles/")) {
+      document
+        .querySelectorAll('ql-dialog[id^="public-profile-award-modal"]')
+        .forEach((dlg) => {
+          const link = dlg.querySelector('[href*="course_templates/"]');
+          if (!link) return;
+          const id = extractId(link.getAttribute("href"));
+          if (!id) return;
+          updates[id] = {
+            completed: true,
+            name: dlg.getAttribute("headline") || (updates[id] && updates[id].name) || "",
+            url: link.getAttribute("href"),
+          };
+        });
+    }
+
+    // 3) 課程內頁：判斷「這門課自己」是否完成（.course-completed 為完成標記）
     const selfId = extractId(location.pathname);
     if (selfId) {
       const isCourseInner =

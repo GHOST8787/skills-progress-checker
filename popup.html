@@ -21,7 +21,7 @@
     /* 標題列：白底 + 頂部 Google 四色條 + 右上四色圓點 */
     .head {
       position: relative;
-      background: #fff;
+      background: #fffdf9;
       color: #202124;
       padding: 16px 16px 13px;
       font-size: 16px;
@@ -46,16 +46,6 @@
     .summary { padding: 10px 16px 4px; font-size: 12px; color: #5f6368; }
     .summary b { color: #1a73e8; }
 
-    .bar { display: flex; align-items: center; gap: 10px; padding: 8px 16px 12px; }
-    .scan-btn {
-      border: none; cursor: pointer;
-      background: #1a73e8; color: #fff;
-      font-weight: 600; font-size: 12.5px;
-      padding: 9px 16px; border-radius: 999px;
-      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.25);
-    }
-    .scan-btn:hover { background: #1765cc; }
-    .scan-btn:disabled { background: #c3d6f5; cursor: default; box-shadow: none; }
     .hide-done {
       flex: 0 0 auto; display: flex; align-items: center; gap: 5px;
       font-size: 12px; color: #5f6368; cursor: pointer; user-select: none;
@@ -88,26 +78,80 @@
     .prog-body { display: none; padding: 2px 0 6px; }
     .prog.open .prog-body { display: block; }
 
-    .course { display: flex; align-items: flex-start; gap: 9px; padding: 7px 14px 7px 26px; text-decoration: none; }
-    .course:hover { background: #fbf7f0; }
+    .course { flex: 1 1 auto; display: flex; align-items: flex-start; gap: 9px; padding: 7px 0; text-decoration: none; min-width: 0; }
     .st { flex: 0 0 auto; width: 16px; text-align: center; font-size: 13px; font-weight: 700; line-height: 1.45; }
     .st-ok { color: #188038; }
     .st-todo { color: #d93025; }
     .st-unseen { color: #bdc1c6; }
-    .c-name { flex: 1 1 auto; font-size: 12.5px; line-height: 1.45; color: #3c4043; word-break: break-word; }
-    .c-tag { flex: 0 0 auto; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 999px; margin-top: 1px; }
+    .c-name { flex: 1 1 auto; font-size: 12px; line-height: 1.45; color: #3c4043; word-break: break-word; }
+    .c-tag { flex: 0 0 auto; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; margin-top: 1px; }
     .tag-shop { background: #f3e8fd; color: #8430ce; }
     .tag-unseen { background: #f1f3f4; color: #80868b; }
 
-    .prog-note { padding: 6px 14px 10px 26px; font-size: 11px; color: #9aa0a6; line-height: 1.5; }
-
-    .legend {
-      padding: 9px 16px; font-size: 11px; color: #80868b;
-      background: #fbf7f0; border-top: 1px solid #efe7da; line-height: 1.7;
-    }
-    .legend .st { display: inline; width: auto; }
+    .prog-note { padding: 6px 14px 10px 26px; font-size: 11px; color: #5f6368; line-height: 1.5; }
 
     .empty { padding: 22px 14px; font-size: 13px; color: #9aa0a6; text-align: center; line-height: 1.7; }
+
+    /* 公開頁掃描區（貼公開 profile / Skillshop 網址交叉驗證） */
+    /* 區塊分組：每區一條上框線 + 小標 */
+    .section { border-top: 1px solid #efe7da; }
+    .section-label { padding: 11px 16px 3px; font-size: 11px; font-weight: 600; color: #80868b; letter-spacing: 0.04em; }
+    /* 「各學程進度」標頭列：小標 + 隱藏已完成 同一列左右對齊 */
+    .section-head { display: flex; align-items: center; justify-content: space-between; padding-right: 16px; }
+    .pub { padding: 2px 16px 12px; background: #fffdf9; }
+    .pub-row { margin-bottom: 8px; }
+    .pub-row label { display: block; font-size: 11px; color: #5f6368; margin-bottom: 3px; }
+    .pub-row input { width: 100%; font-size: 12px; padding: 7px 10px; border: 1px solid #dadce0; border-radius: 9px; color: #202124; background: #fff; }
+    .pub-row input:focus { outline: none; border-color: #1a73e8; }
+    .pub-btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+    .pub-btns button { flex: 0 0 auto; border: none; cursor: pointer; font-weight: 600; font-size: 12px; padding: 8px 12px; border-radius: 999px; }
+    #savePub { background: #e8f0fe; color: #1a73e8; }
+    #savePub:hover { background: #d7e6fd; }
+    #scanPub, #scanAll { background: #1a73e8; color: #fff; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.25); }
+    #scanPub:hover, #scanAll:hover { background: #1765cc; }
+    #scanPub:disabled, #scanAll:disabled { background: #c3d6f5; cursor: default; box-shadow: none; }
+    .pub-status { display: block; font-size: 11px; color: #5f6368; min-height: 14px; margin-top: 2px; }
+    .pub-help { font-size: 11px; color: #80868b; margin-top: 4px; }
+    .pub-help summary { cursor: pointer; color: #1a73e8; list-style: none; }
+    .pub-help summary::-webkit-details-marker { display: none; }
+    .pub-help summary::before { content: "ⓘ "; }
+    .pub-help p { margin: 6px 0 0; line-height: 1.6; }
+    .pub-help code { background: #f1f3f4; padding: 0 4px; border-radius: 4px; font-size: 10.5px; word-break: break-all; }
+
+    /* 課程 row 外層：容納核取方塊 + 課程連結 */
+    .course-row { display: flex; align-items: flex-start; gap: 8px; padding: 0 14px 0 18px; }
+    .course-row:hover { background: #fbf7f0; }
+    .c-pick { margin-top: 9px; accent-color: #1a73e8; cursor: pointer; flex: 0 0 auto; }
+    .c-pick-spacer { width: 13px; flex: 0 0 auto; }
+
+    /* 批次開啟 bar */
+    .open-bar { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-top: 1px solid #efe7da; background: #fffdf9; }
+    .open-bar label { font-size: 12px; color: #5f6368; cursor: pointer; user-select: none; display: flex; align-items: center; gap: 5px; }
+    .open-bar label input { accent-color: #1a73e8; cursor: pointer; }
+    .open-btn { margin-left: auto; border: none; cursor: pointer; background: #34a853; color: #fff; font-weight: 600; font-size: 12px; padding: 8px 16px; border-radius: 999px; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.25); }
+    .open-btn:hover { background: #2d9248; }
+    .open-btn:disabled { background: #cce8d4; cursor: default; box-shadow: none; }
+
+    /* --- 設計精緻化：hover 過渡 / 聚焦框 / 細捲軸 / 按壓回饋 / 減少動畫 --- */
+    /* 1. hover 變色平滑過渡（0.2s） */
+    .pub-btns button, .open-btn, .prog-head, .course-row {
+      transition: background-color 0.2s ease;
+    }
+    /* 6. 按下瞬間輕微變深，給按壓回饋（用 filter 不位移、不跳版） */
+    .pub-btns button:active, .open-btn:active { filter: brightness(0.93); }
+    /* 2. 鍵盤 Tab 的聚焦框（滑鼠點按不會出現） */
+    button:focus-visible, .course:focus-visible {
+      outline: 2px solid #1a73e8; outline-offset: 2px; border-radius: 8px;
+    }
+    /* 4. 清單細捲軸，配暖白底 */
+    .list::-webkit-scrollbar { width: 8px; }
+    .list::-webkit-scrollbar-track { background: transparent; }
+    .list::-webkit-scrollbar-thumb { background: #e0d9cc; border-radius: 8px; }
+    .list::-webkit-scrollbar-thumb:hover { background: #cfc6b5; }
+    /* 5. 尊重系統「減少動畫」偏好 */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -117,13 +161,45 @@
     <span class="dots"><i></i><i></i><i></i><i></i></span>
   </div>
   <div class="summary" id="summary">讀取中…</div>
-  <div class="bar">
-    <button class="scan-btn" id="scanAll">一鍵掃描全部</button>
-    <label class="hide-done"><input type="checkbox" id="hideDone" /> 隱藏已完成</label>
-    <span class="scan-status" id="scanStatus"></span>
+  <div class="section">
+    <div class="section-label">更新進度</div>
+    <div class="pub">
+      <div class="pub-row">
+        <label>Google Skills 公開 profile</label>
+        <input id="skillsUrl" type="url" placeholder="https://www.skills.google/public_profiles/..." />
+      </div>
+      <div class="pub-row">
+        <label>Skillshop Credential Wallet</label>
+        <input id="shopUrl" type="url" placeholder="https://skillshop.credential.net/profile/..." />
+      </div>
+      <div class="pub-btns">
+        <button id="savePub">儲存網址</button>
+        <button id="scanPub">一鍵掃描公開頁</button>
+        <button id="scanAll">新分頁掃描全部</button>
+      </div>
+      <span class="pub-status" id="pubStatus"></span>
+      <span class="scan-status" id="scanStatus"></span>
+      <details class="pub-help">
+        <summary>這兩個網址怎麼拿？</summary>
+        <p>
+          <b>Google Skills 公開 profile</b>：到 skills.google 個人檔案頁，設為「公開」後複製網址，格式為 <code>www.skills.google/public_profiles/...</code>。涵蓋 AI 職場通識、Google Cloud，及數位行銷裡走 skills.google 的課。<br>
+          <b>Skillshop Credential Wallet</b>：到 Skillshop 的 Credential Wallet 取得公開檔案網址，格式為 <code>skillshop.credential.net/profile/...</code>，補上數位行銷的 Skillshop 認證。<br>
+          兩者皆可在官方計畫「提交認證」頁的「如何取得認證網址」找到教學。
+        </p>
+      </details>
+    </div>
   </div>
-  <div class="list" id="list"></div>
-  <div class="legend" id="legend"></div>
+  <div class="section">
+    <div class="section-head">
+      <div class="section-label">各學程進度</div>
+      <label class="hide-done"><input type="checkbox" id="hideDone" /> 隱藏已完成</label>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+  <div class="open-bar">
+    <label><input type="checkbox" id="pickAll" /> 全選未完成</label>
+    <button class="open-btn" id="openPicked" disabled>開啟選取 (0)</button>
+  </div>
   <script src="master-list.js"></script>
   <script src="popup.js"></script>
 </body>
