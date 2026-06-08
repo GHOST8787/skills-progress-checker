@@ -1,6 +1,8 @@
 // 母清單 — 計畫要求完成的課程（COWORK 於 2026-06-05 從 growonairtw + skills.google 收集）
-// 配對規則：只比對 course_templates/{id} 的數字 id，忽略 /paths/{X}/ 前綴。
-// platform: "skillshop" 的課在 skills.google 偵測不到，總表單獨列「需手動確認」。
+// 配對規則：
+//  - skills.google 課：只比對 course_templates/{id} 的數字 id，忽略 /paths/{X}/ 前綴。
+//  - platform: "skillshop" 課：在 skills.google 偵測不到，改靠 Skillshop 認證頁
+//    （Credential Wallet）的認證代碼 code 比對；掃到該頁文字含此 code = 已取得。
 const MASTER_LIST = {
   skillsBase: "https://www.skills.google",
   // 總整課程（capstone）走官方 LINE，不在任何平台偵測得到，僅提醒用
@@ -48,13 +50,13 @@ const MASTER_LIST = {
     {
       key: "digital-marketing",
       name: "數位行銷學程",
-      note: "前 5 門為 Skillshop 認證，不在 skills.google，需手動確認。",
+      note: "前 5 門為 Skillshop 認證，登入 Skillshop 後按「一鍵掃描」會一併掃認證頁偵測。",
       courses: [
-        { title: "Google Analytics (分析) 認證", platform: "skillshop", u: "https://skillshop.docebosaas.com/learn/courses/9183" },
-        { title: "AI 技術輔助高效廣告認證", platform: "skillshop", u: "https://skillshop.docebosaas.com/learn/courses/10953" },
-        { title: "運用需求開發 創造需求並促成轉換", platform: "skillshop", u: "https://skillshop.docebosaas.com/learn/course/18132" },
-        { title: "從業人員適用的 AI 技術輔助搜尋廣告基礎課程", platform: "skillshop", u: "https://skillshop.docebosaas.com/learn/courses/12565" },
-        { title: "策略專家適用的 AI 技術輔助搜尋廣告基礎課程", platform: "skillshop", u: "https://skillshop.docebosaas.com/learn/courses/9003" },
+        { title: "Google Analytics (分析) 認證", platform: "skillshop", code: "gmp-ma-mastery-lp01-zh-TW", u: "https://skillshop.docebosaas.com/learn/courses/9183" },
+        { title: "AI 技術輔助高效廣告認證", platform: "skillshop", code: "googleads-aiperformance-mastery-lp01-zh-TW", u: "https://skillshop.docebosaas.com/learn/courses/10953" },
+        { title: "運用需求開發 創造需求並促成轉換", platform: "skillshop", code: "ads-demandgen-mastery-lp01-zh-TW", u: "https://skillshop.docebosaas.com/learn/course/18132" },
+        { title: "從業人員適用的 AI 技術輔助搜尋廣告基礎課程", platform: "skillshop", code: "adsv2-search-mastery-lp01-zh-TW", u: "https://skillshop.docebosaas.com/learn/courses/12565" },
+        { title: "策略專家適用的 AI 技術輔助搜尋廣告基礎課程", platform: "skillshop", code: "ads-search-mastery-lp03-zh-TW", u: "https://skillshop.docebosaas.com/learn/courses/9003" },
         { title: "生成式 AI：瞭解基礎概念", u: "/course_templates/1265" },
         { title: "Gemini Gems – Your Ultimate Marketing Sidekick", u: "/paths/2480/course_templates/1349" },
         { title: "Content Generation with Gemini Made Easy", u: "/paths/2480/course_templates/1369" },

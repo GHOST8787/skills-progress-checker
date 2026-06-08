@@ -16,6 +16,9 @@
     "946": { completed: false, name: "Innovating with Google Cloud AI", url: "/paths/9/course_templates/946" },
   };
 
+  // Skillshop 認證頁（Credential Wallet）：「我的活動 > 認證」分頁，登入態下對所有帳號是同一網址
+  const SKILLSHOP_CERT_URL = "https://skillshop.docebosaas.com/legacy/lms/index.php?r=myActivities/index&tab=certification";
+
   const $ = (id) => document.getElementById(id);
 
   let currentProgress = {}; // 記住最後一次的進度，切換「隱藏已完成」時免重抓
@@ -46,12 +49,29 @@
     }
   }
 
+  function isShop(c) { return c.platform === "skillshop"; }
+
+  // 可自動偵測：skills.google 課有 course id，或 Skillshop 課有認證 code
+  function isDetectable(c) {
+    if (isShop(c)) return !!c.code;
+    return !!idOf(c.u);
+  }
+
+  // 在 progress 裡的鍵：skills.google 用數字 id，Skillshop 用認證 code（與 content.js 寫入一致）
+  function keyOf(c) {
+    if (isShop(c)) return c.code || null;
+    return idOf(c.u);
+  }
+
   // 一門課的狀態：ok / todo / unseen / shop
   function courseState(course, progress) {
-    if (course.platform === "skillshop") return "shop";
-    const id = idOf(course.u);
-    if (!id) return "shop"; // 沒有可偵測 id，比照手動
-    const p = progress[id];
+    const key = keyOf(course);
+    if (!key) return "shop"; // 無法偵測（例如沒有 code 的 skillshop），比照手動
+    const p = progress[key];
+    if (isShop(course)) {
+      // Credential Wallet 只列已取得，掃到才算完成；沒掃到先維持「待確認」樣式
+      return p && p.completed ? "ok" : "shop";
+    }
     if (!p) return "unseen";
     return p.completed ? "ok" : "todo";
   }
@@ -70,8 +90,8 @@
     const seenIds = new Set(), doneIds = new Set();
 
     const sections = MASTER_LIST.programs.map((prog) => {
-      const detect = prog.courses.filter((c) => c.platform !== "skillshop" && idOf(c.u));
-      const shop = prog.courses.filter((c) => c.platform === "skillshop" || !idOf(c.u));
+      const detect = prog.courses.filter(isDetectable);
+      const shop = prog.courses.filter((c) => !isDetectable(c));
 
       let done = 0;
       const rows = prog.courses
@@ -100,7 +120,7 @@
         .join("");
 
       // 累計（去重，跨學程同一門課只算一次）
-      detect.forEach((c) => { const id = idOf(c.u); seenIds.add(id); if (progress[id] && progress[id].completed) doneIds.add(id); });
+      detect.forEach((c) => { const k = keyOf(c); if (!k) return; seenIds.add(k); if (progress[k] && progress[k].completed) doneIds.add(k); });
       totalShop += shop.length;
 
       const allDone = detect.length > 0 && done >= detect.length;
@@ -123,13 +143,13 @@
 
     const uniqueDetectTotal = (() => {
       const s = new Set();
-      MASTER_LIST.programs.forEach((p) => p.courses.forEach((c) => { const id = idOf(c.u); if (c.platform !== "skillshop" && id) s.add(id); }));
+      MASTER_LIST.programs.forEach((p) => p.courses.forEach((c) => { if (isDetectable(c)) { const k = keyOf(c); if (k) s.add(k); } }));
       return s.size;
     })();
 
     $("summary").innerHTML =
-      "母清單可偵測 <b>" + uniqueDetectTotal + "</b> 門　・　已完成 <b>" + doneIds.size +
-      "</b>　・　Skillshop 待手動 <b>" + totalShop + "</b>";
+      "母清單可偵測 <b>" + uniqueDetectTotal + "</b> 門　・　已完成 <b>" + doneIds.size + "</b>"
+      + (totalShop ? "　・　待手動 <b>" + totalShop + "</b>" : "");
 
     $("list").innerHTML = sections.join("");
 
@@ -175,7 +195,7 @@
     setStatus("已在背景開啟 " + urls.length + " 門課程分頁");
   }
 
-  // ---- 一鍵掃描全部 ----
+  // ---- 一鍵掃描（公開 profile + 各學程頁 + Skillshop 認證頁）----
   function setStatus(msg) { const e = $("scanStatus"); if (e) e.textContent = msg; }
 
   // 從母清單推出「要開哪些頁面才能掃到所有可偵測課程」：
@@ -197,6 +217,9 @@
     const urls = [];
     paths.forEach((p) => urls.push(MASTER_LIST.skillsBase + p + "?locale=zh_TW"));
     standalone.forEach((s) => urls.push(MASTER_LIST.skillsBase + s + "?locale=zh_TW"));
+    // 有 Skillshop 認證課時，一併開認證頁掃 code（需登入 Skillshop）
+    const hasShop = MASTER_LIST.programs.some((p) => p.courses.some((c) => c.platform === "skillshop" && c.code));
+    if (hasShop) urls.push(SKILLSHOP_CERT_URL);
     return urls;
   }
 
@@ -206,10 +229,34 @@
       setStatus("（預覽模式無法開分頁，請在 Chrome 擴充內使用）");
       return;
     }
-    const urls = buildScanUrls();
-    const WAIT = 14; // 秒：給分頁載入 + content script 掃描的時間
-    btn.disabled = true;
+    // 掃描前先確認兩個網址都有填、且已按儲存
+    const sBox = ($("skillsUrl").value || "").trim();
+    const shBox = ($("shopUrl").value || "").trim();
+    if (!sBox || !shBox) {
+      setStatus("請先填入兩個網址（Google Skills 公開 profile 與 Skillshop 認證頁）");
+      return;
+    }
+    chrome.storage.local.get(["publicUrls"], (d) => {
+      const saved = d.publicUrls || {};
+      if (saved.skills !== sBox || saved.shop !== shBox) {
+        setStatus("網址有更動，請先按「儲存網址」再掃描");
+        return;
+      }
+      runFullScan(sBox, shBox, btn);
+    });
+  }
 
+  // 一鍵掃描：同時開「公開 profile + 各學程頁 + Skillshop 認證頁」，兩邊一起抓、互相補強（任一邊確認完成就標 ✓）
+  function runFullScan(skillsUrl, shopUrl, btn) {
+    const set = new Set();
+    if (/^https?:\/\//i.test(skillsUrl)) set.add(skillsUrl);
+    if (/^https?:\/\//i.test(shopUrl)) set.add(shopUrl);
+    // buildScanUrls 已含各學程頁 + Skillshop 認證頁；用 Set 去重（shopUrl 預設就等於認證頁）
+    buildScanUrls().forEach((u) => set.add(u));
+    const urls = [...set];
+
+    const WAIT = 16; // 秒：配合 Skillshop legacy LMS iframe 載入較慢
+    btn.disabled = true;
     const ids = [];
     urls.forEach((u) =>
       chrome.tabs.create({ url: u, active: false }, (tab) => { if (tab) ids.push(tab.id); })
@@ -245,49 +292,8 @@
     setPubStatus("已儲存網址");
   }
 
-  function scanPublic() {
-    const btn = $("scanPub");
-    if (typeof chrome === "undefined" || !chrome.tabs) {
-      setPubStatus("（預覽模式無法開分頁，請在 Chrome 擴充內使用）");
-      return;
-    }
-    const urls = [];
-    const sUrl = ($("skillsUrl").value || "").trim();
-    const shUrl = ($("shopUrl").value || "").trim();
-    if (/^https?:\/\//i.test(sUrl)) urls.push(sUrl);
-    if (/^https?:\/\//i.test(shUrl)) urls.push(shUrl);
-    if (!urls.length) { setPubStatus("請先填入至少一個公開頁網址"); return; }
-
-    // 掃描前先記住網址，省得每次重打
-    savePublicUrls();
-
-    const WAIT = 10; // 公開頁是伺服器端渲染、載入快，10 秒足夠
-    btn.disabled = true;
-    const ids = [];
-    urls.forEach((u) => chrome.tabs.create({ url: u, active: false }, (tab) => { if (tab) ids.push(tab.id); }));
-
-    let remain = WAIT;
-    setPubStatus("正在掃描中，請靜待 " + remain + " 秒…");
-    const cd = setInterval(() => {
-      remain -= 1;
-      if (remain > 0) setPubStatus("正在掃描中，請靜待 " + remain + " 秒…");
-    }, 1000);
-
-    setTimeout(() => {
-      clearInterval(cd);
-      if (chrome.tabs && ids.length) chrome.tabs.remove(ids, () => {}); // 背景分頁掃完自動關閉
-      loadProgress((progress) => {
-        render(progress);
-        setPubStatus("掃描完成，已更新總表");
-        btn.disabled = false;
-      });
-    }, WAIT * 1000);
-  }
-
   const savePubBtn = $("savePub");
   if (savePubBtn) savePubBtn.addEventListener("click", savePublicUrls);
-  const scanPubBtn = $("scanPub");
-  if (scanPubBtn) scanPubBtn.addEventListener("click", scanPublic);
 
   // 批次開啟綁定：list 內 checkbox 用事件委派（render 重畫不掉 listener）
   const listEl = $("list");
@@ -322,7 +328,8 @@
       if (hideBox) hideBox.checked = !!d.hideDone;
       const pu = d.publicUrls || {};
       if ($("skillsUrl") && pu.skills) $("skillsUrl").value = pu.skills;
-      if ($("shopUrl") && pu.shop) $("shopUrl").value = pu.shop;
+      // Skillshop 認證頁網址固定，沒存過就預設帶入
+      if ($("shopUrl")) $("shopUrl").value = pu.shop || SKILLSHOP_CERT_URL;
       loadProgress(render);
     });
   } else {

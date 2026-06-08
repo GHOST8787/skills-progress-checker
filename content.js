@@ -14,6 +14,18 @@
     return m ? m[1] : null;
   }
 
+  // 從母清單取出所有 Skillshop 認證的代碼（master-list.js 由 manifest 先載入，提供全域 MASTER_LIST）
+  function skillshopCerts() {
+    if (typeof MASTER_LIST === "undefined") return [];
+    const out = [];
+    MASTER_LIST.programs.forEach((p) =>
+      p.courses.forEach((c) => {
+        if (c.platform === "skillshop" && c.code) out.push({ code: c.code, name: c.title });
+      })
+    );
+    return out;
+  }
+
   // 掃描目前頁面，收集 {id: {completed, name, url}}
   function collect() {
     const updates = {};
@@ -47,6 +59,20 @@
             url: link.getAttribute("href"),
           };
         });
+    }
+
+    // 2b) Skillshop 認證頁（docebosaas Credential Wallet）：此頁只列出「已取得」的認證，
+    //     故頁面文字若含某認證的 code，即代表該認證已取得。用 code 比對不依賴特定 class，
+    //     Docebo 改版面也不會壞。
+    if (location.hostname === "skillshop.docebosaas.com") {
+      const text = document.body ? document.body.innerText : "";
+      if (text) {
+        skillshopCerts().forEach(({ code, name }) => {
+          if (text.includes(code)) {
+            updates[code] = { completed: true, name, url: location.href };
+          }
+        });
+      }
     }
 
     // 3) 課程內頁：判斷「這門課自己」是否完成（.course-completed 為完成標記）

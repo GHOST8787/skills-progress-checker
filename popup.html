@@ -107,9 +107,9 @@
     .pub-btns button { flex: 0 0 auto; border: none; cursor: pointer; font-weight: 600; font-size: 12px; padding: 8px 12px; border-radius: 999px; }
     #savePub { background: #e8f0fe; color: #1a73e8; }
     #savePub:hover { background: #d7e6fd; }
-    #scanPub, #scanAll { background: #1a73e8; color: #fff; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.25); }
-    #scanPub:hover, #scanAll:hover { background: #1765cc; }
-    #scanPub:disabled, #scanAll:disabled { background: #c3d6f5; cursor: default; box-shadow: none; }
+    #scanAll { background: #1a73e8; color: #fff; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.25); }
+    #scanAll:hover { background: #1765cc; }
+    #scanAll:disabled { background: #c3d6f5; cursor: default; box-shadow: none; }
     .pub-status { display: block; font-size: 11px; color: #5f6368; min-height: 14px; margin-top: 2px; }
     .pub-help { font-size: 11px; color: #80868b; margin-top: 4px; }
     .pub-help summary { cursor: pointer; color: #1a73e8; list-style: none; }
@@ -169,13 +169,12 @@
         <input id="skillsUrl" type="url" placeholder="https://www.skills.google/public_profiles/..." />
       </div>
       <div class="pub-row">
-        <label>Skillshop Credential Wallet</label>
-        <input id="shopUrl" type="url" placeholder="https://skillshop.credential.net/profile/..." />
+        <label>Skillshop 認證頁（Credential Wallet）</label>
+        <input id="shopUrl" type="url" placeholder="https://skillshop.docebosaas.com/legacy/lms/index.php?r=myActivities/index&tab=certification" />
       </div>
       <div class="pub-btns">
         <button id="savePub">儲存網址</button>
-        <button id="scanPub">一鍵掃描公開頁</button>
-        <button id="scanAll">新分頁掃描全部</button>
+        <button id="scanAll">一鍵掃描</button>
       </div>
       <span class="pub-status" id="pubStatus"></span>
       <span class="scan-status" id="scanStatus"></span>
@@ -183,8 +182,8 @@
         <summary>這兩個網址怎麼拿？</summary>
         <p>
           <b>Google Skills 公開 profile</b>：到 skills.google 個人檔案頁，設為「公開」後複製網址，格式為 <code>www.skills.google/public_profiles/...</code>。涵蓋 AI 職場通識、Google Cloud，及數位行銷裡走 skills.google 的課。<br>
-          <b>Skillshop Credential Wallet</b>：到 Skillshop 的 Credential Wallet 取得公開檔案網址，格式為 <code>skillshop.credential.net/profile/...</code>，補上數位行銷的 Skillshop 認證。<br>
-          兩者皆可在官方計畫「提交認證」頁的「如何取得認證網址」找到教學。
+          <b>Skillshop 認證頁</b>：已預設帶入 Skillshop「我的活動 > 認證」（Credential Wallet）網址，登入 Skillshop 後按「一鍵掃描」即可偵測數位行銷的 5 門 Skillshop 認證；不需另外複製網址。<br>
+          兩個網址都填好並按「儲存網址」後，再按「一鍵掃描」會一次掃：公開 profile、各學程頁、Skillshop 認證頁。
         </p>
       </details>
     </div>
