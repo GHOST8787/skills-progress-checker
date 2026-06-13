@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>Skills Hero</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { width: 1180px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "liga" 1; }
+  body {
+    width: 1180px;
+    font-family: "Google Sans", -apple-system, "PingFang TC", "Microsoft JhengHei", "Inter", sans-serif;
+    color: #202124;
+    background: #fffdf9;
+    background-image:
+      linear-gradient(rgba(32,33,36,0.030) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(32,33,36,0.030) 1px, transparent 1px);
+    background-size: 54px 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 56px;
+    padding: 60px 72px;
+    position: relative;
+    overflow: hidden;
+  }
+  body::before { content: ""; position: absolute; top: -150px; right: -120px; width: 520px; height: 520px; border-radius: 50%; background: radial-gradient(circle, rgba(66,133,244,0.15), transparent 70%); pointer-events: none; }
+  body::after  { content: ""; position: absolute; bottom: -160px; left: -130px; width: 460px; height: 460px; border-radius: 50%; background: radial-gradient(circle, rgba(52,168,83,0.11), transparent 70%); pointer-events: none; }
+
+  .copy { position: relative; z-index: 2; flex: 0 1 auto; max-width: 540px; }
+  .eyebrow { display: flex; align-items: center; gap: 13px; font-size: 13px; font-weight: 700; letter-spacing: 0.20em; text-transform: uppercase; color: #1a73e8; margin-bottom: 20px; }
+  .eyebrow .logo { width: 30px; height: 30px; border-radius: 8px; background: #fff; padding: 4px; border: 1px solid #eadfce; box-shadow: 0 2px 6px rgba(32,33,36,0.08); display: flex; }
+  .eyebrow .logo img { width: 100%; height: 100%; object-fit: contain; }
+  h1 { font-size: 60px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.07; color: #202124; margin-bottom: 22px; }
+  h1 .accent { color: #1a73e8; }
+  .tagline { font-size: 20px; line-height: 1.55; color: #5f6368; max-width: 500px; margin-bottom: 32px; }
+  .features { display: flex; flex-direction: column; gap: 13px; }
+  .feat { display: flex; align-items: center; gap: 14px; font-size: 16.5px; color: #202124; font-weight: 500; }
+  .feat .dot { width: 10px; height: 10px; border-radius: 50%; background: #1a73e8; flex-shrink: 0; box-shadow: 0 0 0 4px rgba(26,115,232,0.14); }
+  .feat b { font-weight: 700; }
+
+  .pm {
+    flex: 0 0 auto; width: 384px; background: #fffdf9; border-radius: 16px; overflow: hidden;
+    box-shadow: 0 44px 90px rgba(32,33,36,0.20), 0 14px 32px rgba(32,33,36,0.12), 0 0 0 1px rgba(32,33,36,0.05);
+    transform: rotate(-1.5deg); position: relative; z-index: 3; line-height: 1.45;
+  }
+  .pm-stripe { height: 6px; background: linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75% 100%); }
+  .pm-header { padding: 14px 16px 12px; background: #fffdf9; border-bottom: 1px solid #f0e9dc; display: flex; align-items: center; gap: 10px; }
+  .pm-icon { width: 32px; height: 32px; border-radius: 8px; background: #fff; padding: 1px; border: 1px solid #f0e9dc; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .pm-icon img { width: 100%; height: 100%; object-fit: contain; }
+  .pm-htext { flex: 1; min-width: 0; }
+  .pm-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; color: #a89786; text-transform: uppercase; margin-bottom: 1px; }
+  .pm-title { font-size: 14px; font-weight: 700; letter-spacing: -0.015em; color: #202124; }
+  .pm-dots { display: flex; gap: 5px; }
+  .pm-dots i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .pm-dots i:nth-child(1){ background:#4285f4 } .pm-dots i:nth-child(2){ background:#ea4335 } .pm-dots i:nth-child(3){ background:#fbbc04 } .pm-dots i:nth-child(4){ background:#34a853 }
+
+  .pm-content { padding: 12px; display: flex; flex-direction: column; gap: 10px; background-image: linear-gradient(rgba(32,33,36,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(32,33,36,0.035) 1px, transparent 1px); background-size: 28px 28px; }
+  .pm-slabel { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #a89786; padding: 2px 4px 0; display: flex; justify-content: space-between; }
+  .pm-slabel b { color: #1a73e8; }
+
+  .pm-card { background: #fff; border-radius: 11px; border: 1px solid #f0e9dc; overflow: hidden; box-shadow: 0 1px 2px rgba(32,33,36,0.03); }
+  .pm-phead { display: flex; align-items: center; gap: 10px; padding: 11px 13px; }
+  .pm-caret { color: #1a73e8; font-size: 9px; flex-shrink: 0; }
+  .pm-pname { flex: 1; font-size: 13px; font-weight: 600; color: #202124; letter-spacing: -0.01em; }
+  .pm-count { font-size: 11.5px; font-weight: 700; padding: 3px 11px; border-radius: 999px; background: #e8f0fe; color: #1a73e8; }
+  .pm-rows { border-top: 1px solid #f3eddf; padding: 4px 0 6px; }
+  .pm-course { display: flex; align-items: flex-start; gap: 9px; padding: 5px 13px 5px 24px; }
+  .pm-st { width: 14px; text-align: center; font-size: 12.5px; font-weight: 700; line-height: 1.4; flex-shrink: 0; }
+  .ok { color: #188038; } .todo { color: #d93025; } .unseen { color: #c3c7cc; }
+  .pm-cname { flex: 1; font-size: 11.5px; line-height: 1.4; color: #3c4043; }
+  .pm-tag { font-size: 9px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: #f1f3f4; color: #80868b; margin-top: 1px; flex-shrink: 0; }
+
+  .pm-footer { padding: 12px; background: #fffdf9; border-top: 1px solid #f0e9dc; }
+  .pm-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 13.5px; font-weight: 600; background: #1a73e8; color: #fff; box-shadow: 0 2px 0 #1257b8; font-family: inherit; }
+</style>
+</head>
+<body>
+  <div class="copy">
+    <div class="eyebrow"><span class="logo"><img src="../icons/icon128.png" alt=""></span>Skills 學程進度檢查</div>
+    <h1>三個學程的進度，<br><span class="accent">一眼看完</span></h1>
+    <p class="tagline">Google 數位人才探索計畫的完成度，一鍵掃描就攤在工具列彈窗，分學程標出還缺哪幾門。</p>
+    <div class="features">
+      <div class="feat"><span class="dot"></span><span><b>一鍵掃描全部</b>，自動抓每門課的完成狀態</span></div>
+      <div class="feat"><span class="dot"></span><span>分學程顯示<b>已完成 / 還缺哪幾門</b></span></div>
+      <div class="feat"><span class="dot"></span><span>純讀取頁面 · 開源 MIT · 不送出任何資料</span></div>
+    </div>
+  </div>
+
+  <div class="pm">
+    <div class="pm-stripe"></div>
+    <div class="pm-header">
+      <div class="pm-icon"><img src="../icons/icon128.png" alt=""></div>
+      <div class="pm-htext">
+        <div class="pm-eyebrow">Chrome Extension</div>
+        <div class="pm-title">Skills 學程進度</div>
+      </div>
+      <div class="pm-dots"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="pm-content">
+      <div class="pm-slabel"><span>母清單 · 三學程</span><span>已完成 <b>12</b> · 待手動 5</span></div>
+
+      <div class="pm-card">
+        <div class="pm-phead"><span class="pm-caret">▼</span><span class="pm-pname">AI 職場通識學程</span><span class="pm-count">12 / 33</span></div>
+        <div class="pm-rows">
+          <div class="pm-course"><span class="pm-st ok">✓</span><span class="pm-cname">生成式 AI：不只是聊天機器人</span></div>
+          <div class="pm-course"><span class="pm-st ok">✓</span><span class="pm-cname">生成式 AI：瞭解基礎概念</span></div>
+          <div class="pm-course"><span class="pm-st ok">✓</span><span class="pm-cname">生成式 AI：掌握幕後技術與環境</span></div>
+          <div class="pm-course"><span class="pm-st todo">✗</span><span class="pm-cname">生成式 AI 應用程式：徹底改變工作方式</span></div>
+          <div class="pm-course"><span class="pm-st unseen">—</span><span class="pm-cname">生成式 AI 代理：實現組織轉型</span><span class="pm-tag">未抓到</span></div>
+        </div>
+      </div>
+
+      <div class="pm-card">
+        <div class="pm-phead"><span class="pm-caret" style="transform:rotate(0)">▶</span><span class="pm-pname">數位行銷學程</span><span class="pm-count">8 / 10</span></div>
+      </div>
+      <div class="pm-card">
+        <div class="pm-phead"><span class="pm-caret" style="transform:rotate(0)">▶</span><span class="pm-pname">Google Cloud 學程</span><span class="pm-count">2 / 11</span></div>
+      </div>
+    </div>
+    <div class="pm-footer">
+      <button class="pm-btn">一鍵掃描全部</button>
+    </div>
+  </div>
+</body>
+</html>
