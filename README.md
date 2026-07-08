@@ -1,3 +1,5 @@
+**繁體中文** | [English](./README.en.md)
+
 # Skills 學程進度檢查（Chrome 擴充功能）
 
 在 [Google Skills](https://www.skills.google) 課程／路徑頁**靜默偵測**課程完成狀態，對照「Google 數位人才探索計畫」的母清單，於工具列彈窗顯示三個學程的完成進度。純讀取頁面，不點擊、不送出任何資料。
