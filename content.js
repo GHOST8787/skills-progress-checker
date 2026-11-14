@@ -96,24 +96,29 @@
     return updates;
   }
 
-  // 把這次收集到的併入 storage（completed 採 sticky-true，不讓 true 被後續覆蓋掉）
+  // 把這次收集到的併入 storage。單輪掃描（scanId）為權威狀態（issue #1 問題一）：
+  // - 該筆紀錄的 scanId 非本輪 → 整筆覆寫（完成→未完成可以回退）
+  // - 為本輪 → 合併（同一輪不同分頁互補，任一分頁確認完成即完成）
+  // - 這次沒收集到任何項目 → 不動既有資料（掃描中斷不遺失；回退由 popup 以 scanId 判定）
   function save(updates) {
     const ids = Object.keys(updates);
     if (!ids.length) return;
     if (typeof chrome === "undefined" || !chrome.storage) return;
 
-    chrome.storage.local.get(["progress"], (data) => {
+    chrome.storage.local.get(["progress", "scanId"], (data) => {
       const progress = data.progress || {};
+      const scanId = data.scanId || null; // 本輪代號，由 popup 啟動掃描時產生；沒掃過為 null
       let changed = false;
       ids.forEach((id) => {
         const u = updates[id];
         const prev = progress[id] || {};
-        const completed = !!(u.completed || prev.completed);
+        const same = (prev.scanId || null) === scanId;
+        const completed = same ? !!(u.completed || prev.completed) : !!u.completed;
         const name = u.name || prev.name || "";
         const url = u.url || prev.url || "";
         // 只有內容有變才寫，減少不必要的寫入
-        if (prev.completed !== completed || prev.name !== name || prev.url !== url) {
-          progress[id] = { completed, name, url, ts: Date.now() };
+        if (prev.completed !== completed || prev.name !== name || prev.url !== url || (prev.scanId || null) !== scanId) {
+          progress[id] = { completed, name, url, scanId, ts: Date.now() };
           changed = true;
         }
       });

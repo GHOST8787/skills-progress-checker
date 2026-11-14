@@ -7,7 +7,8 @@
 ## Features
 
 - **Per-program progress list**: AI Workplace Literacy / Digital Marketing / Google Cloud, with each course marked ✓ completed, ✗ not completed, — not detected, ○ Skillshop (pending scan).
-- **One-click scan**: First confirm that both the "Google Skills public profile" and "Skillshop certification page" URLs are filled in and saved; once pressed, it opens "public profile + each program page + Skillshop certification page" in the background all at once to scan, then closes them and updates the summary table when done.
+- **One-click scan (two-stage)**: First confirm that both the "Google Skills public profile" and "Skillshop certification page" URLs are filled in and saved. Stage one opens only 2 background tabs (public profile + Skillshop certification page); stage two runs only if some courses remain unconfirmed, opening just the program/course pages that own the missing items, then closes them and updates the summary table. Each scan is an authoritative round: an item marked done last round but not found this round (e.g. an expired certification) reverts to not-done instead of staying ✓ forever.
+- **Full scan (fallback)**: If stage one misbehaves (not logged in, broken page), use "Full scan" to open every covered page at once and rescan.
 - **Both sides reinforce each other**: skills.google courses are detected using both the "public profile" and the "each program page"; a completion confirmed by either side marks it ✓, reducing missed detections caused by a single page not loading properly.
 - **Hide completed**: Once the checkbox is ticked, only courses not yet done are shown (the count is not affected, and the state is remembered).
 - **Skillshop certification detection**: The first 5 Digital Marketing courses are Skillshop certifications; after logging in to Skillshop, "one-click scan" scans the Skillshop certification page (Credential Wallet) and marks completion by matching certification codes.

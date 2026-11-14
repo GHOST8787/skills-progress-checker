@@ -110,6 +110,9 @@
     #scanAll { background: #1a73e8; color: #fff; box-shadow: 0 1px 2px rgba(60, 64, 67, 0.25); }
     #scanAll:hover { background: #1765cc; }
     #scanAll:disabled { background: #c3d6f5; cursor: default; box-shadow: none; }
+    #scanFull { background: #f1f3f4; color: #5f6368; }
+    #scanFull:hover { background: #e4e6e8; }
+    #scanFull:disabled { color: #b8bcc0; cursor: default; }
     .pub-status { display: block; font-size: 11px; color: #5f6368; min-height: 14px; margin-top: 2px; }
     .pub-help { font-size: 11px; color: #80868b; margin-top: 4px; }
     .pub-help summary { cursor: pointer; color: #1a73e8; list-style: none; }
@@ -175,6 +178,7 @@
       <div class="pub-btns">
         <button id="savePub">儲存網址</button>
         <button id="scanAll">一鍵掃描</button>
+        <button id="scanFull" title="第一階段異常（未登入、頁面壞掉）時的備援：一次開啟全部涵蓋頁面重掃">全量掃描</button>
       </div>
       <span class="pub-status" id="pubStatus"></span>
       <span class="scan-status" id="scanStatus"></span>
@@ -200,6 +204,7 @@
     <button class="open-btn" id="openPicked" disabled>開啟選取 (0)</button>
   </div>
   <script src="master-list.js"></script>
+  <script src="scan-plan.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
