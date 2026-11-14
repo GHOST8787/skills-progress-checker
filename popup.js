@@ -22,12 +22,10 @@
   const $ = (id) => document.getElementById(id);
 
   let currentProgress = {}; // 記住最後一次的進度，切換「隱藏已完成」時免重抓
+  let latestScanId = null;  // 最新一輪掃描代號；只承認這一輪的紀錄（issue #1 問題一）
   function isHideDone() { const e = $("hideDone"); return !!(e && e.checked); }
 
-  function idOf(u) {
-    const m = (u || "").match(/course_templates\/(\d+)/);
-    return m ? m[1] : null;
-  }
+  function idOf(u) { return ScanPlan.idOf(u); }
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, (m) =>
@@ -43,37 +41,22 @@
 
   function loadProgress(cb) {
     if (typeof chrome !== "undefined" && chrome.storage) {
-      chrome.storage.local.get(["progress"], (data) => cb(data.progress || {}));
+      chrome.storage.local.get(["progress", "scanId"], (data) => {
+        latestScanId = data.scanId || null;
+        cb(data.progress || {});
+      });
     } else {
       cb(DEMO_PROGRESS);
     }
   }
 
-  function isShop(c) { return c.platform === "skillshop"; }
+  function isShop(c) { return ScanPlan.isShop(c); }
+  function isDetectable(c) { return ScanPlan.isDetectable(c); }
+  function keyOf(c) { return ScanPlan.keyOf(c); }
 
-  // 可自動偵測：skills.google 課有 course id，或 Skillshop 課有認證 code
-  function isDetectable(c) {
-    if (isShop(c)) return !!c.code;
-    return !!idOf(c.u);
-  }
-
-  // 在 progress 裡的鍵：skills.google 用數字 id，Skillshop 用認證 code（與 content.js 寫入一致）
-  function keyOf(c) {
-    if (isShop(c)) return c.code || null;
-    return idOf(c.u);
-  }
-
-  // 一門課的狀態：ok / todo / unseen / shop
+  // 一門課的狀態：ok / todo / unseen / shop（只承認最新一輪的紀錄，舊輪不沿用）
   function courseState(course, progress) {
-    const key = keyOf(course);
-    if (!key) return "shop"; // 無法偵測（例如沒有 code 的 skillshop），比照手動
-    const p = progress[key];
-    if (isShop(course)) {
-      // Credential Wallet 只列已取得，掃到才算完成；沒掃到先維持「待確認」樣式
-      return p && p.completed ? "ok" : "shop";
-    }
-    if (!p) return "unseen";
-    return p.completed ? "ok" : "todo";
+    return ScanPlan.courseState(course, progress, latestScanId);
   }
 
   const STATE_ICON = {
@@ -119,8 +102,8 @@
         })
         .join("");
 
-      // 累計（去重，跨學程同一門課只算一次）
-      detect.forEach((c) => { const k = keyOf(c); if (!k) return; seenIds.add(k); if (progress[k] && progress[k].completed) doneIds.add(k); });
+      // 累計（去重，跨學程同一門課只算一次；只算最新一輪確認的完成）
+      detect.forEach((c) => { const k = keyOf(c); if (!k) return; seenIds.add(k); if (courseState(c, progress) === "ok") doneIds.add(k); });
       totalShop += shop.length;
 
       const allDone = detect.length > 0 && done >= detect.length;
@@ -198,38 +181,43 @@
   // ---- 一鍵掃描（公開 profile + 各學程頁 + Skillshop 認證頁）----
   function setStatus(msg) { const e = $("scanStatus"); if (e) e.textContent = msg; }
 
-  // 從母清單推出「要開哪些頁面才能掃到所有可偵測課程」：
-  // 路徑前綴的課 → 開該路徑頁（一頁含整批）；獨立課（無路徑）→ 開該課程頁。
-  function buildScanUrls() {
-    const paths = new Set();
-    const standalone = new Set();
-    MASTER_LIST.programs.forEach((p) =>
-      p.courses.forEach((c) => {
-        if (c.platform === "skillshop") return;
-        const pm = c.u.match(/^(\/paths\/\d+)\//);
-        if (pm) paths.add(pm[1]);
-        else {
-          const im = c.u.match(/^\/course_templates\/\d+/);
-          if (im) standalone.add(im[0]);
-        }
-      })
-    );
-    const urls = [];
-    paths.forEach((p) => urls.push(MASTER_LIST.skillsBase + p + "?locale=zh_TW"));
-    standalone.forEach((s) => urls.push(MASTER_LIST.skillsBase + s + "?locale=zh_TW"));
-    // 有 Skillshop 認證課時，一併開認證頁掃 code（需登入 Skillshop）
-    const hasShop = MASTER_LIST.programs.some((p) => p.courses.some((c) => c.platform === "skillshop" && c.code));
-    if (hasShop) urls.push(SKILLSHOP_CERT_URL);
-    return urls;
+  const WAIT = 16; // 秒：配合 Skillshop legacy LMS iframe 載入較慢
+
+  // 產生本輪掃描代號並寫入 storage（content.js 寫入、popup 判定都認這一輪）
+  function startRound(cb) {
+    const scanId = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    chrome.storage.local.set({ scanId }, () => {
+      latestScanId = scanId;
+      cb(scanId);
+    });
   }
 
-  function scanAll() {
-    const btn = $("scanAll");
+  // 背景開一批分頁 → 等 WAIT 秒 → 關閉 → 回報進度
+  function openBatch(urls, label, done) {
+    const ids = [];
+    urls.forEach((u) =>
+      chrome.tabs.create({ url: u, active: false }, (tab) => { if (tab) ids.push(tab.id); })
+    );
+    let remain = WAIT;
+    setStatus(label + "，請靜待 " + remain + " 秒…（背景開了 " + urls.length + " 頁）");
+    const cd = setInterval(() => {
+      remain -= 1;
+      if (remain > 0) setStatus(label + "，請靜待 " + remain + " 秒…");
+    }, 1000);
+    setTimeout(() => {
+      clearInterval(cd);
+      if (chrome.tabs && ids.length) chrome.tabs.remove(ids, () => {});
+      loadProgress(done);
+    }, WAIT * 1000);
+  }
+
+  // 掃描前共同檢查：兩個網址都有填、且已按儲存；通過才執行 run(skillsUrl, shopUrl, btn)
+  function guardScan(btnId, run) {
+    const btn = $(btnId);
     if (typeof chrome === "undefined" || !chrome.tabs) {
       setStatus("（預覽模式無法開分頁，請在 Chrome 擴充內使用）");
       return;
     }
-    // 掃描前先確認兩個網址都有填、且已按儲存
     const sBox = ($("skillsUrl").value || "").trim();
     const shBox = ($("shopUrl").value || "").trim();
     if (!sBox || !shBox) {
@@ -242,43 +230,57 @@
         setStatus("網址有更動，請先按「儲存網址」再掃描");
         return;
       }
-      runFullScan(sBox, shBox, btn);
+      run(sBox, shBox, btn);
     });
   }
 
-  // 一鍵掃描：同時開「公開 profile + 各學程頁 + Skillshop 認證頁」，兩邊一起抓、互相補強（任一邊確認完成就標 ✓）
-  function runFullScan(skillsUrl, shopUrl, btn) {
-    const set = new Set();
-    if (/^https?:\/\//i.test(skillsUrl)) set.add(skillsUrl);
-    if (/^https?:\/\//i.test(shopUrl)) set.add(shopUrl);
-    // buildScanUrls 已含各學程頁 + Skillshop 認證頁；用 Set 去重（shopUrl 預設就等於認證頁）
-    buildScanUrls().forEach((u) => set.add(u));
-    const urls = [...set];
-
-    const WAIT = 16; // 秒：配合 Skillshop legacy LMS iframe 載入較慢
+  // 一鍵掃描（issue #1 問題二：兩階段）：
+  // 第一階段只開「公開 profile + Skillshop 認證頁」2 頁；
+  // 還有未確認的課才進第二階段，只開缺項所屬的路徑頁／課程頁。
+  function runTwoStageScan(skillsUrl, shopUrl, btn) {
     btn.disabled = true;
-    const ids = [];
-    urls.forEach((u) =>
-      chrome.tabs.create({ url: u, active: false }, (tab) => { if (tab) ids.push(tab.id); })
-    );
+    startRound(() => {
+      const stage1 = new Set();
+      if (/^https?:\/\//i.test(skillsUrl)) stage1.add(skillsUrl);
+      if (/^https?:\/\//i.test(shopUrl)) stage1.add(shopUrl);
+      openBatch([...stage1], "第一階段（公開 profile＋認證頁）", (progress) => {
+        const stage2 = ScanPlan.missingPages(MASTER_LIST, progress, latestScanId);
+        if (!stage2.length) {
+          render(progress);
+          setStatus("掃描完成（第一階段即全數確認，共開 " + stage1.size + " 頁）");
+          btn.disabled = false;
+          return;
+        }
+        openBatch(stage2, "第二階段（補掃 " + stage2.length + " 個缺項頁面）", (p2) => {
+          render(p2);
+          setStatus("掃描完成，已更新總表（共開 " + (stage1.size + stage2.length) + " 頁）");
+          btn.disabled = false;
+        });
+      });
+    });
+  }
 
-    let remain = WAIT;
-    setStatus("正在掃描中，請靜待 " + remain + " 秒…（背景開了 " + urls.length + " 頁）");
-    const cd = setInterval(() => {
-      remain -= 1;
-      if (remain > 0) setStatus("正在掃描中，請靜待 " + remain + " 秒…");
-    }, 1000);
-
-    setTimeout(() => {
-      clearInterval(cd);
-      if (chrome.tabs && ids.length) chrome.tabs.remove(ids, () => {});
-      loadProgress((progress) => {
+  // 全量掃描（手動備援）：一次開「公開 profile + 各學程頁 + Skillshop 認證頁」。
+  // 第一階段異常（未登入、頁面壞掉、結果明顯不對）時用這顆重掃。
+  function runFullScan(skillsUrl, shopUrl, btn) {
+    btn.disabled = true;
+    startRound(() => {
+      const set = new Set();
+      if (/^https?:\/\//i.test(skillsUrl)) set.add(skillsUrl);
+      if (/^https?:\/\//i.test(shopUrl)) set.add(shopUrl);
+      ScanPlan.buildScanUrls(MASTER_LIST).forEach((u) => set.add(u));
+      const hasShop = MASTER_LIST.programs.some((p) => p.courses.some((c) => c.platform === "skillshop" && c.code));
+      if (hasShop) set.add(SKILLSHOP_CERT_URL);
+      openBatch([...set], "全量掃描", (progress) => {
         render(progress);
-        setStatus("掃描完成，已更新總表");
+        setStatus("全量掃描完成，已更新總表");
         btn.disabled = false;
       });
-    }, WAIT * 1000);
+    });
   }
+
+  function scanAll() { guardScan("scanAll", runTwoStageScan); }
+  function scanFull() { guardScan("scanFull", runFullScan); }
 
   // ---- 掃公開頁（貼公開 profile / Skillshop 網址交叉驗證）----
   function setPubStatus(msg) { const e = $("pubStatus"); if (e) e.textContent = msg; }
@@ -310,6 +312,8 @@
 
   const scanBtn = $("scanAll");
   if (scanBtn) scanBtn.addEventListener("click", scanAll);
+  const scanFullBtn = $("scanFull");
+  if (scanFullBtn) scanFullBtn.addEventListener("click", scanFull);
 
   // 「隱藏已完成」核取方塊：切換即重畫，並記住勾選狀態
   const hideBox = $("hideDone");

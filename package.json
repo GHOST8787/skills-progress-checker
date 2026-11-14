@@ -1,0 +1,11 @@
+{
+  "name": "skills-progress-checker",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Chrome extension（Manifest V3，無編譯步驟）：lint＝JS 語法檢查，test＝issue 驗收測試，build＝lint＋test",
+  "scripts": {
+    "lint": "node --check content.js && node --check popup.js && node --check scan-plan.js && node --check master-list.js",
+    "test": "node tests/run_tests.js",
+    "build": "pnpm lint && pnpm test"
+  }
+}

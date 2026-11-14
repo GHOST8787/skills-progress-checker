@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Skills 進度檢查",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "對照「Google 數位人才探索計畫」母清單，偵測 Google Skills 與 Skillshop 認證的完成進度，標出還沒做完的課。純讀取，不點擊、不送出任何資料。",
   "permissions": ["storage"],
   "icons": {
